@@ -27,8 +27,6 @@
         <h4 class="center" @click="getinfo">Рассчитать дешевый маршрут</h4>
         <div class="row z-depth-1 main_app">
             <div class="col s4">
-                <!-- <form action="#"> -->
-
                     <div class="col s12 countries">
                         <label>Звонящая сторона (Caller)</label>
                         <select class="browser-default" v-model="callerSelected">
@@ -44,32 +42,30 @@
                     </div>
                     <p>
                         <label>
-                            <input type="checkbox" class="filled-in orange"/>
+                            <input type="checkbox" class="filled-in orange" v-model="filterAll"/>
                             <span class="checkbox">Все</span>
                         </label>
                     </p>
                     <p>
                         <label>
-                            <input type="checkbox" class="filled-in"/>
+                            <input :disabled="filterAll" type="checkbox" class="filled-in" v-model="filterDirect"/>
                             <span class="checkbox">Прямое соединение</span>
                         </label>
                     </p>
                     <p>
                         <label>
-                            <input type="checkbox" class="filled-in"/>
+                            <input :disabled="filterAll" type="checkbox" class="filled-in" v-model="filterOneNode"/>
                             <span class="checkbox">Один дополнительный узел</span>
                         </label>
                     </p>
                     <p>
                         <label>
-                            <input type="checkbox" class="filled-in"/>
+                            <input :disabled="filterAll" type="checkbox" class="filled-in" v-model="filterTwoNodes"/>
                             <span class="checkbox">Два дополнительных узла</span>
                         </label>
                     </p>
-                <!-- </form> -->
             </div>
             <div class="col s8">
-                <!-- {{countries}} -->
                 <ul class="calls">
                     <li class="call row" v-for="call in callRoutes">
                         <div class="fullprice col s2">
@@ -87,13 +83,12 @@
                         </div>
                     </li>
                 </ul>
-                <!-- {{callRoutes}} -->
+                <p v-if="callRoutes.length===0" style="text-align: center;">Нет совпадений</p>
             </div>
         </div>
     </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.12/vue.min.js"></script>
-<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.4/lodash.min.js"></script> -->
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 <script>
     new Vue({
@@ -104,9 +99,9 @@
             callerSelected: '',
             calleeSelected: '',
             filterAll: true,
-            filterDirect: false,
-            filterOneNode: false,
-            filterTwoNodes: false
+            filterDirect: true,
+            filterOneNode: true,
+            filterTwoNodes: true
         },
         computed: {
             callRoutes() {
@@ -138,6 +133,35 @@
                         })
                     }
                 })
+                if (this.filterDirect && this.filterOneNode && !this.filterTwoNodes) {
+                    callRoutes = callRoutes.filter(item=> {
+                        return (item.length===1 || item.length===2)
+                    })
+                } else if (!this.filterDirect && this.filterOneNode && this.filterTwoNodes) {
+                    callRoutes = callRoutes.filter(item=> {
+                       return (item.length===2 || item.length===3)
+                    })
+                } else if (this.filterDirect && !this.filterOneNode && this.filterTwoNodes) {
+                    callRoutes = callRoutes.filter(item=> {
+                       return (item.length===1 || item.length===3)
+                    })
+                } else if (this.filterDirect && !this.filterOneNode && !this.filterTwoNodes) {
+                    callRoutes = callRoutes.filter(item=> {
+                       return (item.length===1)
+                    })
+                } else if (!this.filterDirect && this.filterOneNode && !this.filterTwoNodes) {
+                    callRoutes = callRoutes.filter(item=> {
+                       return (item.length===2)
+                    })
+                } else if (!this.filterDirect && !this.filterOneNode && this.filterTwoNodes) {
+                    callRoutes = callRoutes.filter(item=> {
+                       return (item.length===3)
+                    })
+                } else if (!this.filterDirect && !this.filterOneNode && !this.filterTwoNodes) {
+                    callRoutes = callRoutes.filter(item=> {
+                       return null
+                    })
+                }
                 return callRoutes.sort((a,b)=>{
                     return a.reduce((accumulator, currentValue)=> {
                         return accumulator + currentValue.price
@@ -182,33 +206,29 @@
         },
         mounted() {
         },
+        watch: {
+            filterAll(newValue) {
+                if (newValue) {
+                    this.filterDirect = true
+                    this.filterOneNode = true
+                    this.filterTwoNodes = true
+                }
+            }
+        }
     })
 </script>
 <style>
-    /* select {
-        display: unset;
-    } */
     .main_app {
         border-radius: 5px;
     }
     .countries{
         margin: 10px 0;
     }
-    .calls, .calls p {
-        /* margin-top: 0; */
-    }
     .call {
         height: 120px;
         margin-bottom: 20px;
         background-color: rgb(230, 228, 228);
-        /* border-top-left-radius: 100px;
-        border-bottom-left-radius: 100px; */
-        /* display: flex; */
     }
-    /* .checkbox {
-        padding-left: 25px;
-        line-height: 21px;
-    } */
     .checkbox::after, .checkbox::before {
         top: 3px !important;
     }
@@ -226,10 +246,6 @@
     }
     .call_info {
         margin-top: 15px;
-        /* display: flex;
-        flex-wrap: wrap;
-        flex-direction: row;
-        height: 120px; */
     }
     .call__item {
         display: flex;
@@ -240,7 +256,7 @@
     .provider {
         position: relative;
         height: 120px;
-        margin-right: 20px;
+        margin-right: 25px;
     }
 
     .provider__name {
