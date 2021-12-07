@@ -32,7 +32,7 @@
 
 <div id="app">
     <div class="container">
-        <h4 class="center">Рассчитать дешевый маршрут</h4>
+        <h4 class="center" @click="getinfo">Рассчитать дешевый маршрут</h4>
         <div class="row">
             <div class="col s4 z-depth-1">
                 <!-- <form action="#"> -->
@@ -45,8 +45,8 @@
                     </div>
 
                     <div class="col s12 countries">
-                        <label>Принимающая сторона (Calee)</label>
-                        <select v-model="caleeSelected">
+                        <label>Принимающая сторона (Callee)</label>
+                        <select v-model="calleeSelected">
                             <option v-for="(country,index) in countries" :key="index" :value="country">{{countries[index]}}</option>
                         </select>
                     </div>
@@ -93,7 +93,7 @@
             callsInfo: [],
             countries:[],
             callerSelected: '',
-            caleeSelected: '',
+            calleeSelected: '',
             filterAll: true,
             filterDirect: false,
             filterOneNode: false,
@@ -102,12 +102,19 @@
         computed: {
             callRoutes() {
                 let callRoutes = [];
-                console.log(this.callerSelected)
-                // this.callsInfo.filter(item=> {
-                //     console.log(item)
-                // })
-                return this.callsInfo
+                // console.log(this.countryCode)
+                this.callsInfo.filter(item=> {
+                    // item.des === this.countryCode.callee ? console.log(item,true) : console.log(item, false)
+                    if (item.des === this.countryCode.callee) {
+                        callRoutes.push(item)
+                    }
+                })
+                return callRoutes
             },
+            countryCode() {
+                // return { caller: this.getKeyByValue(this.countries, this.callerSelected), callee: this.getKeyByValue(this.countries, this.calleeSelected)}
+                return { caller: this.getKeyByValue(this.countries, this.callerSelected), callee: this.getKeyByValue(this.countries, this.calleeSelected) === 'us' ? 'usa' : this.getKeyByValue(this.countries, this.calleeSelected)}
+            }
             // callsFormed() {
             //     return this.callsInfo
             // }
@@ -117,7 +124,7 @@
                 let data = response.data.data
                 this.countries = data.country
                 this.callerSelected = this.countries[Object.keys(this.countries)[0]]
-                this.caleeSelected = this.countries[Object.keys(this.countries)[1]]
+                this.calleeSelected = this.countries[Object.keys(this.countries)[1]]
                 let callsInfo = [];
                 for (let providersName in data.company) {
                     let callsInfoDivided = data.company[providersName]
@@ -129,6 +136,14 @@
                 console.log(callsInfo)
                 this.callsInfo = callsInfo;
             })
+        },
+        methods: {
+            getinfo() {
+                console.log(this.countryCode)
+            },
+            getKeyByValue(object, value) {
+                return Object.keys(object).find(key => object[key] === value);
+            }
         },
         mounted() {
         },
