@@ -75,8 +75,15 @@
                         <div class="fullprice col s2">
                             <span class="fullprice__span">{{fullPrice(call)}}$</span>
                         </div>
-                        <div class="col s10" v-for="item in call">
-                            <div>{{item}}</div>
+                        <div class="call_info col s10">
+                            <div class="call__item  col" v-for="item in call">
+                                <span v-show="call.indexOf(item)===0" style="font-size: 28px;">{{item.src}}</span>
+                                <div class="provider">
+                                    <span class="provider__name provider__name_first">{{item.providersName}} {{item.price}}$</span>
+                                    <i class="medium material-icons">arrow_forward</i>
+                                </div>
+                                <span style="font-size: 28px;">{{item.des}}</span>
+                            </div>
                         </div>
                     </li>
                 </ul>
@@ -216,6 +223,38 @@
         top: 27%;
         left: 25%;
         font-size: 32px;
+    }
+    .call_info {
+        margin-top: 15px;
+        /* display: flex;
+        flex-wrap: wrap;
+        flex-direction: row;
+        height: 120px; */
+    }
+    .call__item {
+        display: flex;
+        justify-content: space-between;
+        flex-direction: row;
+        position: relative;
+    }
+    .provider {
+        position: relative;
+        height: 120px;
+        margin-right: 20px;
+    }
+
+    .provider__name {
+        position: absolute;
+        text-align: center;
+        border-radius: 20px;
+        font-size: 18px;
+        top: 54px;
+        width: 120px;
+        background-color: #26a69a;
+        color: white;
+    }
+    .provider__name_first {
+        left: -25px;
     }
 </style>
 </body>
