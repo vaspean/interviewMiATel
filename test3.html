@@ -12,73 +12,75 @@
             color: #fff;
         }
     </style>
-     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
-
-     <!-- Compiled and minified JavaScript -->
-     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-     <script>
-            // document.addEventListener('DOMContentLoaded', function() {
-            //     var elems = document.querySelectorAll('select');
-            //     var instances = M.FormSelect.init(elems);
-            // });
-     </script>
-     <!-- <script src="../call-paths.json">
-        
-     </script> -->
-     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-     <link rel="import" href="call-paths.json">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script>
+    </script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <link rel="import" href="call-paths.json">
 </head>
 <body>
 
 <div id="app">
     <div class="container">
         <h4 class="center" @click="getinfo">Рассчитать дешевый маршрут</h4>
-        <div class="row">
-            <div class="col s4 z-depth-1">
+        <div class="row z-depth-1 main_app">
+            <div class="col s4">
                 <!-- <form action="#"> -->
 
                     <div class="col s12 countries">
                         <label>Звонящая сторона (Caller)</label>
-                        <select v-model="callerSelected">
+                        <select class="browser-default" v-model="callerSelected">
                             <option v-for="(country,index) in countries" :key="index" :value="country">{{countries[index]}}</option>
                         </select>
                     </div>
 
                     <div class="col s12 countries">
                         <label>Принимающая сторона (Callee)</label>
-                        <select v-model="calleeSelected">
+                        <select class="browser-default" v-model="calleeSelected">
                             <option v-for="(country,index) in countries" :key="index" :value="country">{{countries[index]}}</option>
                         </select>
                     </div>
                     <p>
                         <label>
                             <input type="checkbox" class="filled-in orange"/>
-                            <span>Все</span>
+                            <span class="checkbox">Все</span>
                         </label>
                     </p>
                     <p>
                         <label>
                             <input type="checkbox" class="filled-in"/>
-                            <span>Прямое соединение</span>
+                            <span class="checkbox">Прямое соединение</span>
                         </label>
                     </p>
                     <p>
                         <label>
                             <input type="checkbox" class="filled-in"/>
-                            <span>Один дополнительный узел</span>
+                            <span class="checkbox">Один дополнительный узел</span>
                         </label>
                     </p>
                     <p>
                         <label>
                             <input type="checkbox" class="filled-in"/>
-                            <span>Два дополнительных узла</span>
+                            <span class="checkbox">Два дополнительных узла</span>
                         </label>
                     </p>
                 <!-- </form> -->
             </div>
             <div class="col s8">
                 <!-- {{countries}} -->
-                {{callRoutes}}
+                <ul class="calls">
+                    <li class="call row" v-for="call in callRoutes">
+                        <div class="fullprice col s2">
+                            <span class="fullprice__span">{{fullPrice(call)}}$</span>
+                        </div>
+                        <div class="col s10" v-for="item in call">
+                            <div>{{item}}</div>
+                        </div>
+                    </li>
+                </ul>
+                <!-- {{callRoutes}} -->
             </div>
         </div>
     </div>
@@ -102,22 +104,44 @@
         computed: {
             callRoutes() {
                 let callRoutes = [];
-                // console.log(this.countryCode)
-                this.callsInfo.filter(item=> {
-                    // item.des === this.countryCode.callee ? console.log(item,true) : console.log(item, false)
-                    if (item.des === this.countryCode.callee) {
-                        callRoutes.push(item)
+                this.callsInfo.filter(item => {
+                    if (item.src === this.countryCode.caller && item.des === this.countryCode.callee) {
+                        callRoutes.push([item])
                     }
                 })
-                return callRoutes
+                this.callsInfo.filter(secondItem => {
+                    if (secondItem.des === this.countryCode.callee) {
+                        this.callsInfo.filter(firstItem => {
+                            if ((firstItem.src === this.countryCode.caller) && (firstItem.des === secondItem.src) && (firstItem.src!==secondItem.des)) {
+                                callRoutes.push([firstItem,  secondItem])
+                            }
+                        })
+                    }
+                })
+                this.callsInfo.filter(thirdItem => {
+                    if (thirdItem.des === this.countryCode.callee) {
+                        this.callsInfo.filter(firstItem => {
+                            if ((firstItem.src === this.countryCode.caller)) {
+                                this.callsInfo.filter(secondItem => {
+                                    if ((secondItem.src === firstItem.des && secondItem.des === thirdItem.src) && (firstItem.src!==secondItem.des) && (firstItem.src!==thirdItem.des) && (secondItem.src !== thirdItem.des)) {
+                                        callRoutes.push([firstItem,  secondItem, thirdItem])
+                                    }
+                                })
+                            }
+                        })
+                    }
+                })
+                return callRoutes.sort((a,b)=>{
+                    return a.reduce((accumulator, currentValue)=> {
+                        return accumulator + currentValue.price
+                    }, 0) - b.reduce((accumulator, currentValue)=> {
+                        return accumulator + currentValue.price
+                    }, 0)
+                })
             },
             countryCode() {
-                // return { caller: this.getKeyByValue(this.countries, this.callerSelected), callee: this.getKeyByValue(this.countries, this.calleeSelected)}
-                return { caller: this.getKeyByValue(this.countries, this.callerSelected), callee: this.getKeyByValue(this.countries, this.calleeSelected) === 'us' ? 'usa' : this.getKeyByValue(this.countries, this.calleeSelected)}
+                return { caller: this.getKeyByValue(this.countries, this.callerSelected) === 'us' ? 'usa' : this.getKeyByValue(this.countries, this.callerSelected), callee: this.getKeyByValue(this.countries, this.calleeSelected) === 'us' ? 'usa' : this.getKeyByValue(this.countries, this.calleeSelected)}
             }
-            // callsFormed() {
-            //     return this.callsInfo
-            // }
         },
         created() {
             axios.get("call-paths.json").then(response=> {
@@ -133,7 +157,6 @@
                     })
                     callsInfo.push(...callsInfoDivided)
                 }
-                console.log(callsInfo)
                 this.callsInfo = callsInfo;
             })
         },
@@ -143,6 +166,11 @@
             },
             getKeyByValue(object, value) {
                 return Object.keys(object).find(key => object[key] === value);
+            },
+            fullPrice(call) {
+                return call.reduce((accumulator, currentValue)=> {
+                    return accumulator + currentValue.price
+                }, 0)
             }
         },
         mounted() {
@@ -150,11 +178,44 @@
     })
 </script>
 <style>
-    select {
+    /* select {
         display: unset;
+    } */
+    .main_app {
+        border-radius: 5px;
     }
     .countries{
         margin: 10px 0;
+    }
+    .calls, .calls p {
+        /* margin-top: 0; */
+    }
+    .call {
+        height: 120px;
+        margin-bottom: 20px;
+        background-color: rgb(230, 228, 228);
+        /* border-top-left-radius: 100px;
+        border-bottom-left-radius: 100px; */
+        /* display: flex; */
+    }
+    /* .checkbox {
+        padding-left: 25px;
+        line-height: 21px;
+    } */
+    .checkbox::after, .checkbox::before {
+        top: 3px !important;
+    }
+    .fullprice {
+        background: #26a69a;
+        height: 120px;
+        position: relative;
+    }
+    .fullprice__span {
+        color: white;
+        position: absolute;
+        top: 27%;
+        left: 25%;
+        font-size: 32px;
     }
 </style>
 </body>
